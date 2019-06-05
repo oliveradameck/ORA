@@ -1,0 +1,56 @@
+reset;
+
+option omit_zero_rows 1;
+option randseed'';
+option solver './cplex';
+
+# Room assignment problem
+#
+
+set rooms := {1..2};
+set courses := {1..6};
+set timeslots := {0..8};
+set departments := {1..3};
+
+# Raumkapazität
+var capacity{r in rooms} integer;
+fix capacity[1] := 20;
+fix capacity[2] := 50;
+#param capacity{r in rooms} integer; # := round(Uniform(30,60));
+
+# Kursbelegung
+param enrollment{c in courses} := round(Uniform(5,40));
+
+# Anzahl Häufigkeit eines Kurses pro Woche
+param courseFrequency{c in courses} := round(Uniform(1,2));
+
+# Lehrstuhlzuteilung
+param departmentAssign{c in courses} := round(Uniform(0.5,3.5));
+
+var x {c in courses, r in rooms, t in timeslots} binary;
+
+# Keine Doppelbelegung Raum, Slots
+subject to NB1{r in rooms, t in timeslots}:
+    sum{c in courses} x[c,r,t] <= 1;
+
+# Häufigkeit eines Kurses pro Woche
+subject to NB2{c in courses}:
+    sum{r in rooms, t in timeslots} x[c,r,t] = courseFrequency[c];
+
+# Raumkapazität beachten
+subject to NB3{c in courses, r in rooms, t in timeslots}:
+    x[c,r,t] * enrollment[c] <= x[c,r,t] * capacity[r];
+
+# Kurse nicht gleichzeitig in verschiedenen Räumen
+subject to NB5{c in courses, t in timeslots}:
+    sum{r in rooms} x[c,r,t] <= 1;
+
+# Kurse eines Lehrstuhls nicht gleichzeitig
+#subject to NB4{c in courses, t in timeslots, d in departments}:
+#    sum{r in rooms} x[c,r,t] <= 
+
+
+solve;
+display x; display capacity; display enrollment; display departmentAssign; display courseFrequency;
+
+end;

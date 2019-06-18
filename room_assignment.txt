@@ -2,10 +2,11 @@ reset;
 
 option omit_zero_rows 1;
 option randseed'';
-option solver './cplex';
+# option solver './cplex';
 
 # Room assignment problem
 #
+
 
 # time slots per day
 param TpD := 4; 
@@ -16,15 +17,27 @@ param DpW := 4;
 
 set rooms := {1..2};
 set courses := {1..4};
-set timeslots := {0..TpD * DpW};
+set timeslots := {0..(TpD * DpW) - 1};
 set departments := {1..3};
 
 # Raumkapazitaet
-var capacity{r in rooms} integer;
-fix capacity[1] := 20;
-fix capacity[2] := 50;
-#fix capacity[3] := 40;
-#param capacity{r in rooms} integer; # := round(Uniform(30,60));
+param capacity{r in rooms};
+
+data;
+
+param capacity :=
+    1 20
+    2 50
+    3 100
+    4 100
+    5 40
+    6 20
+    7 10
+    8 60
+    9 100
+    10 60;
+
+model;
 
 # Kursbelegung
 param enrollment{c in courses} := round(Uniform(5,40));
@@ -60,7 +73,7 @@ subject to NB5{c in courses, t in timeslots}:
 
 # Lehrveranstaltung nicht am gleichen Tag
 subject to NB6{ d in 0..DpW-1, c in courses }:
-    sum { r in rooms, t in 0..TpD } x[c,r,d*TpD+t] <= 1;
+    sum { r in rooms, t in 0..TpD-1 } x[c,r,d*TpD+t] <= 1;
 
 # Time slot auslastung
 
@@ -72,6 +85,6 @@ solve;
 # auslastung der timeslots
 #var auslastung{t in timeslots} := sum{c in courses, r in rooms} x[c, r, t]; 
 
-display x; display capacity; display enrollment; display departmentAssign; display courseFrequency;
+display x; # display capacity; display enrollment; display departmentAssign; display courseFrequency;
 
-end;
+#end;

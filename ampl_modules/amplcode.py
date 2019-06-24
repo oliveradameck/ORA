@@ -93,3 +93,16 @@ class AmplCode:
             if line.startswith("fix"):
                 self.lines[i] = ''
         self._update_code_from_lines()
+
+    def set_param_data(self, name, data):
+        """
+
+        :return:
+        """
+        for i, line in enumerate(self.lines):
+            if line.startswith(f"param {name}"):
+                break
+        _, of, data_old = next(filter(lambda x: x[0] == name, self.get_params()))
+
+        self.lines.insert(i+1, AmplCodeBuilder.param_datablock(name, data=data))
+        self._update_code_from_lines()

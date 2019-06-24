@@ -23,24 +23,9 @@ set departments := {1..3};
 # Raumkapazitaet
 param capacity{r in rooms};
 
-data;
-
-param capacity :=
-    1 20
-    2 50
-    3 100
-    4 100
-    5 40
-    6 20
-    7 10
-    8 60
-    9 100
-    10 60;
-
-model;
 
 # Kursbelegung
-param enrollment{c in courses} := round(Uniform(5,40));
+param maxParticipants{c in courses} := round(Uniform(5,40));
 
 # Anzahl Haeufigkeit eines Kurses pro Woche
 param courseFrequency{c in courses} := round(Uniform(1,2));
@@ -60,7 +45,7 @@ subject to NB2{c in courses}:
 
 # Raumkapazitaet beachten
 subject to NB3{c in courses, r in rooms, t in timeslots}:
-    x[c,r,t] * enrollment[c] <= x[c,r,t] * capacity[r];
+    x[c,r,t] * maxParticipants[c] <= x[c,r,t] * capacity[r];
 
 # Kurse nicht gleichzeitig in verschiedenen Raeumen
 subject to NB5{c in courses, t in timeslots}:
@@ -83,8 +68,8 @@ solve;
 
 
 # auslastung der timeslots
-#var auslastung{t in timeslots} := sum{c in courses, r in rooms} x[c, r, t]; 
+# var auslastung{t in timeslots} := sum{c in courses, r in rooms} x[c, r, t];
 
-display x; # display capacity; display enrollment; display departmentAssign; display courseFrequency;
+display x; # display capacity; display maxParticipants; display departmentAssign; display courseFrequency;
 
 #end;

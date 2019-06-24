@@ -33,3 +33,11 @@ class AmplCodeBuilder:
     @staticmethod
     def fix(name, at, value):
         return f"fix {name}[{at}] := {value};"
+
+    @staticmethod
+    def param_datablock(name, data):
+        s = f"data;\nparam {name} :="
+        for d in data:
+            s += '\n' + ' '.join(list(map(str, d)))
+        s += ";\nmodel;"
+        return s

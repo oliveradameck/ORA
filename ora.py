@@ -13,6 +13,11 @@ TpD = 4
 # Number Of Rooms
 room_count = 10
 
+# capacity
+capacity = {}
+for r in range(1, room_count+1):
+    capacity[r] = [10, 20, 40, 50, 100][r%5]
+
 # Number of Courses
 course_count = 50
 
@@ -28,10 +33,8 @@ amplcode.set_param("TpD", data=TpD)
 
 amplcode.set_set('rooms', '{1..%i}' % room_count)
 amplcode.set_set('courses', '{1..%i}' % course_count)
-# amplcode.delete_fixed()
-# amplcode.fix_var('capacity', 1, 30)
-# amplcode.fix_var('capacity', 2, 100)
-# amplcode.fix_var('capacity', 3, 50)
+
+amplcode.set_param_data("capacity", data=capacity.items())
 
 amplcode.export("ora_export.txt")
 

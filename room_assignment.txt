@@ -28,7 +28,7 @@ param capacity{r in rooms};
 param maxParticipants{c in courses} := round(Uniform(5,40));
 
 # Anzahl Haeufigkeit eines Kurses pro Woche
-param courseFrequency{c in courses} := round(Uniform(1,2));
+param courseFrequency{c in courses}; # := round(Uniform(1,2));
 
 # Lehrstuhlzuteilung
 param departmentAssign{c in courses} := round(Uniform(0.5,3.5));
@@ -51,18 +51,34 @@ subject to NB3{c in courses, r in rooms, t in timeslots}:
 subject to NB5{c in courses, t in timeslots}:
     sum{r in rooms} x[c,r,t] <= 1;
 
-# Kurse eines Lehrstuhls nicht gleichzeitig
-#subject to NB4{c in courses, t in timeslots, d in departments}:
-#    sum{r in rooms} x[c,r,t] <= 
-
-
 # Lehrveranstaltung nicht am gleichen Tag
 subject to NB6{ d in 0..DpW-1, c in courses }:
     sum { r in rooms, t in 0..TpD-1 } x[c,r,d*TpD+t] <= 1;
 
-# Time slot auslastung
 
-# maximize LP: sum{t in timeslots} (100*x[c,r,t]+10*x[i,2]+1*x[i,3]-1000*x[i,4]); # objective
+# Kurse eines Lehrstuhls nicht gleichzeitig
+var xd{d in departments, t in timeslots} binary;
+#subject to NB4{c in courses, t in timeslots, d in departments}:
+#    sum{r in rooms} x[c,r,t] <=
+
+
+
+# the thing with the quetschvariablen
+var minCoursesPerSlot integer;
+var maxCoursesPerSlot integer;
+
+subject to LOWER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) >= minCoursesPerSlot;
+subject to UPPER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) <= maxCoursesPerSlot;
+
+minimize LP: maxCoursesPerSlot - minCoursesPerSlot;
+
+# Non-Linear approach to optimize occupancy  (working, but slow)
+# minimize LP: sum{t in timeslots} ((sum{c in courses, r in rooms} x[c, r, t]) - 2)^2;
+
+## optional: add weights
+## objectve: n * upper_bound - m * lower_bound
+
+
 
 solve;
 

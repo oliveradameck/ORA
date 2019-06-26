@@ -1,17 +1,18 @@
 from amplpy import AMPL, Environment, DataFrame
 import pandas as pd
 import numpy as np
+import sys
 
 from ampl_modules.amplcode import AmplCode
 
 # Days per Week
-DpW = 5
+DpW = 4
 
 # Timeslots per day
 TpD = 4
 
 # Number Of Rooms
-room_count = 10
+room_count = 20
 
 # capacity
 capacity = {}
@@ -19,11 +20,22 @@ for r in range(1, room_count+1):
     capacity[r] = [10, 20, 40, 50, 100][r%5]
 
 # Number of Courses
-course_count = 50
+course_count = 10
+
+# course frequency
+course_frequency = {}
+for c in range(1, course_count+1):
+    course_frequency[c] = [1,2,2][c%3]
 
 print("Optimized Room Assignment Tool")
 
-ampl = AMPL(Environment("/home/paszin/ampl/ampl.linux64"))
+
+print("Setup")
+print("Expected Number of Courses: ", sum(list(course_frequency.values())))
+
+pro_environment = "/home/paszin/ampl-pro/ampl_linux-intel64"
+low_environment = "/home/paszin/ampl/ampl.linux64"
+ampl = AMPL(Environment(pro_environment))
 ampl.setOption('solver', 'cplex')
 
 amplcode = AmplCode.from_file('room_assignment.txt')
@@ -35,10 +47,13 @@ amplcode.set_set('rooms', '{1..%i}' % room_count)
 amplcode.set_set('courses', '{1..%i}' % course_count)
 
 amplcode.set_param_data("capacity", data=capacity.items())
+amplcode.set_param_data("courseFrequency", data=course_frequency.items())
 
 amplcode.export("ora_export.txt")
 
 ampl.eval(amplcode.code)
+
+
 
 ### transform output
 

@@ -6,13 +6,13 @@ import sys
 from ampl_modules.amplcode import AmplCode
 
 # Days per Week
-DpW = 4
+DpW = 3
 
 # Timeslots per day
-TpD = 4
+TpD = 2
 
 # Number Of Rooms
-room_count = 20
+room_count = 5
 
 # capacity
 capacity = {}
@@ -20,7 +20,7 @@ for r in range(1, room_count+1):
     capacity[r] = [10, 20, 40, 50, 100][r%5]
 
 # Number of Courses
-course_count = 10
+course_count = 5
 
 # course frequency
 course_frequency = {}

@@ -62,6 +62,21 @@ var xd{d in departments, t in timeslots} binary;
 #    sum{r in rooms} x[c,r,t] <=
 
 
+# Departments not at same timeslot
+var MaxSimCoursesPerSlot integer;
+
+var departmentsBin{d in departments, c in courses} binary;
+
+subject to DEPASS{c in courses}: departmentsBin[departmentAssign[c], c] = 1;
+
+subject to MINDEPASS{t in timeslots}:
+        sum{r in rooms, d in departments, c in courses}
+            departmentsBin[d, c] * x[c, r, t] <= MaxSimCoursesPerSlot;
+
+minimize MAXDEP: MaxSimCoursesPerSlot;
+
+
+
 # Occupancy
 param occupancy{c in courses, r in rooms} := 1.0*maxParticipants[c]/capacity[r];
 param EventsTotal := sum{c in courses} courseFrequency[c];
@@ -87,7 +102,7 @@ subject to UPPER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t
 
 
 ## Combine!
-minimize ALL: 1/2 * (maxCoursesPerSlot - minCoursesPerSlot) + (sum{c in courses, r in rooms, t in timeslots} x[c, r, t] * (1-occupancy[c, r])) / EventsTotal;
+# minimize ALL: 1/2 * (maxCoursesPerSlot - minCoursesPerSlot) + (sum{c in courses, r in rooms, t in timeslots} x[c, r, t] * (1-occupancy[c, r])) / EventsTotal;
 
 
 solve;
@@ -103,5 +118,7 @@ display occupancy;
 display courses;
 
 display rooms;
+
+display departmentsBin;
 
 #end;

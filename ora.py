@@ -2,6 +2,7 @@ from amplpy import AMPL, Environment, DataFrame
 import pandas as pd
 import numpy as np
 import sys
+import os
 
 from ampl_modules.amplcode import AmplCode
 
@@ -9,10 +10,10 @@ from ampl_modules.amplcode import AmplCode
 DpW = 3
 
 # Timeslots per day
-TpD = 2
+TpD = 3
 
 # Number Of Rooms
-room_count = 5
+room_count = 10
 
 # capacity
 capacity = {}
@@ -33,8 +34,11 @@ print("Optimized Room Assignment Tool")
 print("Setup")
 print("Expected Number of Courses: ", sum(list(course_frequency.values())))
 
-pro_environment = "/home/paszin/ampl-pro/ampl_linux-intel64"
-low_environment = "/home/paszin/ampl/ampl.linux64"
+# pro_environment = "/Users/oliveradameck/Desktop/ampl-pro/ampl_linux-intel64"
+# low_environment = "/User/oliveradameck/Desktopampl/ampl.linux64"
+pro_environment = "ampl"
+# low_environment = "/User/oliveradameck/Desktopampl/ampl.linux64"
+# path = os.path.join(os.path.expanduser('~'), 'ora')
 ampl = AMPL(Environment(pro_environment))
 ampl.setOption('solver', 'cplex')
 

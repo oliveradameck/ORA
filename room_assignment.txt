@@ -81,7 +81,7 @@ minimize MAXDEP: MaxSimCoursesPerSlot;
 param occupancy{c in courses, r in rooms} := 1.0*maxParticipants[c]/capacity[r];
 param EventsTotal := sum{c in courses} courseFrequency[c];
 
-# maximize ROOM_OCCUPANCY: (sum{c in courses, r in rooms, t in timeslots} x[c, r, t] * occupancy[c, r]) / EventsTotal;
+#maximize ROOM_OCCUPANCY: (sum{c in courses, r in rooms, t in timeslots} x[c, r, t] * occupancy[c, r]) / EventsTotal;
 
 # Occupancy Timeslots
 # the thing with the quetschvariablen
@@ -119,6 +119,7 @@ display courses;
 
 display rooms;
 
-display departmentsBin;
+display maxCoursesPerSlot;
+display minCoursesPerSlot;
 
 #end;

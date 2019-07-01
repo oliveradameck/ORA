@@ -65,12 +65,10 @@ var xd{d in departments, t in timeslots} binary;
 # Departments not at same timeslot
 var MaxSimCoursesPerSlot integer;
 
-var departmentsBin{d in departments, c in courses} binary;
+param departmentsBin{d in departments, c in courses} := if departmentAssign[c] = d then 1 else 0;
 
-subject to DEPASS{c in courses}: departmentsBin[departmentAssign[c], c] = 1;
-
-subject to MINDEPASS{t in timeslots}:
-        sum{r in rooms, d in departments, c in courses}
+subject to MINDEPASS{t in timeslots, d in departments}:
+        sum{r in rooms, c in courses}
             departmentsBin[d, c] * x[c, r, t] <= MaxSimCoursesPerSlot;
 
 minimize MAXDEP: MaxSimCoursesPerSlot;

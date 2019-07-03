@@ -7,26 +7,39 @@ import os
 from ampl_modules.amplcode import AmplCode
 
 # Days per Week
-DpW = 4
+DpW = 3
 
 # Timeslots per day
-TpD = 4
+TpD = 2
 
 # Number Of Rooms
-room_count = 20
+# room_count = 3 not in use anymore
+buildings = 2
+rooms_per_building = 2
+rooms = sum([list(range(i*1000+1, i*1000+rooms_per_building+1)) for i in range(1, buildings+1)], [])
 
+# department HQ
+departmentHQ = {1: 1000, 2: 2000}
+
+print(rooms)
 # capacity
 capacity = {}
-for r in range(1, room_count+1):
+for r in rooms:
     capacity[r] = [10, 20, 40, 50, 100][r%5]
 
 # Number of Courses
-course_count = 10
+course_count = 6
 
 # course frequency
 course_frequency = {}
 for c in range(1, course_count+1):
     course_frequency[c] = [1,2,2][c%3]
+
+# department assign
+department_assign = {}
+for c in range(1, course_count+1):
+	department_assign[c] = (c+1) % 2 + 1
+	
 
 print("Optimized Room Assignment Tool")
 
@@ -44,14 +57,23 @@ ampl.setOption('solver', 'cplex')
 
 amplcode = AmplCode.from_file('room_assignment.txt')
 
+print("Parameters from AMPL Code:")
+print(amplcode.get_params())
+
 amplcode.set_param("DpW", data=DpW)
 amplcode.set_param("TpD", data=TpD)
 
-amplcode.set_set('rooms', '{1..%i}' % room_count)
+# amplcode.set_set('rooms', '{' + ','.join(map(str, rooms)) + '}')
+amplcode.set_set('rooms', '{' + ','.join(map(str, rooms)) + '}')
 amplcode.set_set('courses', '{1..%i}' % course_count)
+amplcode.set_set('departments', list(departmentHQ.keys()))
+
 
 amplcode.set_param_data("capacity", data=capacity.items())
 amplcode.set_param_data("courseFrequency", data=course_frequency.items())
+amplcode.set_param_data("departmentHQ", departmentHQ.items())
+amplcode.set_param_data("departmentAssign", department_assign.items())
+
 
 amplcode.export("ora_export.txt")
 
@@ -60,7 +82,8 @@ ampl.eval(amplcode.code)
 
 
 ### transform output
-
+print("Values from Ampl (where x[c, r, t] = 1)")
+print("c,  r,    t")
 values = ampl.getVariable('x').getValues().toPandas()
 data = []
 for key, value in zip(values.index.tolist(), values.values.tolist()):

@@ -105,3 +105,6 @@ venv.bak/
 
 # ampl binaries
 /ampl
+
+# auto generated files
+*_export.txt

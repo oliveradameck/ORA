@@ -1,107 +1,110 @@
+# ROOM ASSIGNMENT PROBLEM
+
 reset;
 
+# Define options
 option omit_zero_rows 1;
 option randseed'';
-# option solver './cplex';
 
-# Room assignment problem
-#
+# Define params required for sets
+param TpD ;                               # time slots per day
+param DpW ;                               # days per week
 
+# Define sets
+set rooms ;                               # rooms
+set courses ;                             # courses
+set timeslots := {0..(TpD * DpW) - 1};    # timeslots
+set departments ;                         # departments
 
-# time slots per day
-param TpD ; 
+# Define params
+param capacity{r in rooms};               # capacity per room
+param departmentHQ{d in departments} ;    # base room per department
+param departmentAssign{c in courses} ;    # department belonging per course
 
-# days per week
-param DpW ;
-
-
-set rooms ;
-set courses ;
-set timeslots := {0..(TpD * DpW) - 1};
-set departments ;
-
-# Raumkapazitaet
-param capacity{r in rooms};
-
-# base room per department
-param departmentHQ{d in departments} ;
-
-
-# Kursbelegung
-param maxParticipants{c in courses} := round(Uniform(5,10));
-
-# Anzahl Haeufigkeit eines Kurses pro Woche
-param courseFrequency{c in courses}; # := round(Uniform(1,2));
-
-# Lehrstuhlzuteilung
-param departmentAssign{c in courses} ;
-
+### binary whether department is assigned to a course
 param departmentBin{d in departments, c in courses} := if departmentAssign[c] = d then 1 else 0;
 
-var x {c in courses, r in rooms, t in timeslots} binary;
-
-var MaxSimCoursesPerSlot integer;
-
-
-# Keine Doppelbelegung Raum, Slots
-subject to NB1{r in rooms, t in timeslots}:
-    sum{c in courses} x[c,r,t] <= 1;
-
-# Hauufigkeit eines Kurses pro Woche
-subject to NB2{c in courses}:
-    sum{r in rooms, t in timeslots} x[c,r,t] = courseFrequency[c];
-
-# Raumkapazitaet beachten
-subject to NB3{c in courses, r in rooms, t in timeslots}:
-    x[c,r,t] * maxParticipants[c] <= x[c,r,t] * capacity[r];
-
-# Kurse nicht gleichzeitig in verschiedenen Raeumen
-subject to NB5{c in courses, t in timeslots}:
-    sum{r in rooms} x[c,r,t] <= 1;
-
-# Lehrveranstaltung nicht am gleichen Tag
-subject to NB6{ d in 0..DpW-1, c in courses }:
-    sum { r in rooms, t in 0..TpD-1 } x[c,r,d*TpD+t] <= 1;
-
-# Kurse nahe des department HQs
-# subject to NB7 {d in departments, r in rooms, t in timeslots}:
-#    x[departmentAssign[c],r,t] * departmentBin[d,c] * r >= departmentHQ[d];
-    
-# Kurse nahe des department HQs
-subject to NB71 {c in courses, r in rooms, t in timeslots}:
-    x[c,r,t] * r >= x[c,r,t] * departmentHQ[departmentAssign[c]];
-
-# Kurse nur im Gebäude des department HQ
-subject to NB72 {c in courses, r in rooms, t in timeslots}:
-    x[c,r,t] * r <= x[c,r,t] * (departmentHQ[departmentAssign[c]] + 1000);
-
-
-
-
-# Departments not at same timeslot
-subject to MINDEPASS{t in timeslots, d in departments}:
-        sum{r in rooms, c in courses}
-            departmentBin[d, c] * x[c, r, t] <= MaxSimCoursesPerSlot;
-
-# minimize MAXDEP: MaxSimCoursesPerSlot;
-
-
+param maxParticipants{c in courses} := round(Uniform(5,10));   # maximal enrollment of participants per course
+param courseFrequency{c in courses}; # := round(Uniform(1,2)); # course frequency - weekly / biweekly
 
 # Occupancy
 param occupancy{c in courses, r in rooms} := 1.0*maxParticipants[c]/capacity[r];
 param EventsTotal := sum{c in courses} courseFrequency[c];
 
-#maximize ROOM_OCCUPANCY: (sum{c in courses, r in rooms, t in timeslots} x[c, r, t] * occupancy[c, r]) / EventsTotal;
+# Decision variable
+var x {c in courses, r in rooms, t in timeslots} binary;
+
+# Define vars
+var MaxSimCoursesPerSlot integer;
 
 # Occupancy Timeslots
 # the thing with the quetschvariablen
-var minCoursesPerSlot integer;
-var maxCoursesPerSlot integer;
+var minCoursesPerSlot integer; # min courses per slot
+var maxCoursesPerSlot integer; # max courses per slot
+
+### 01 ###
+# Only one course at a specific time slot in a room
+##########
+subject to NB1{r in rooms, t in timeslots}:
+    sum{c in courses} x[c,r,t] <= 1;
+
+### 02 ###
+# TODO: Haeufigkeit eines Kurses pro Woche
+##########
+subject to NB2{c in courses}:
+    sum{r in rooms, t in timeslots} x[c,r,t] = courseFrequency[c];
+
+### 03 ###
+# consider room capacity based on course participants
+##########
+subject to NB3{c in courses, r in rooms, t in timeslots}:
+    x[c,r,t] * maxParticipants[c] <= x[c,r,t] * capacity[r];
+
+### 04 ###
+# Courses not in at the same time slot in different rooms
+##########
+subject to NB4{c in courses, t in timeslots}:
+    sum{r in rooms} x[c,r,t] <= 1;
+
+### 05 ###
+# Courses not at the same day
+##########
+subject to NB5{ d in 0..DpW-1, c in courses }:
+    sum { r in rooms, t in 0..TpD-1 } x[c,r,d*TpD+t] <= 1;
+
+### 06 ###
+# Courses nearby their department (departmentHQ)
+##########
+#subject to NB61 {c in courses, r in rooms, t in timeslots}:
+#    x[c,r,t] * r >= x[c,r,t] * departmentHQ[departmentAssign[c]];
+
+# Kurse nur im Gebaeude des department HQ
+#subject to NB62 {c in courses, r in rooms, t in timeslots}:
+#    x[c,r,t] * r <= x[c,r,t] * (departmentHQ[departmentAssign[c]] + 1000);
+
+
+# Kurse nur im Gebaeude des department HQ
+# subject to NB62 {c in courses, r in rooms, t in timeslots}:
+#    abs(x[c,r,t] * r - departmentHQ[departmentAssign[c]]) <= ROOM_DISTANCE;
+minimize ROOM_DISTANCE{c in courses, r in rooms, t in timeslots}:  x[c,r,t] * (r - departmentHQ[departmentAssign[c]]);
+
+
+### XX ###
+# Courses of same departments not at same time slot
+##########
+subject to MINDEPASS{t in timeslots, d in departments}:
+    sum{r in rooms, c in courses}
+        departmentBin[d, c] * x[c, r, t] <= MaxSimCoursesPerSlot;
+
+
 
 subject to LOWER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) >= minCoursesPerSlot;
 subject to UPPER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) <= maxCoursesPerSlot;
 
-#minimize SLOT_SPREAD: maxCoursesPerSlot - minCoursesPerSlot;
+# Define objectives
+# minimize MAXDEP: MaxSimCoursesPerSlot;
+# maximize ROOM_OCCUPANCY: (sum{c in courses, r in rooms, t in timeslots} x[c, r, t] * occupancy[c, r]) / EventsTotal;
+# minimize SLOT_SPREAD: maxCoursesPerSlot - minCoursesPerSlot;
 
 ## optional: add weights
 ## objectve: n * upper_bound - m * lower_bound
@@ -114,13 +117,14 @@ subject to UPPER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t
 ## Combine!
 # minimize ALL: 1/2 * (maxCoursesPerSlot - minCoursesPerSlot) + (sum{c in courses, r in rooms, t in timeslots} x[c, r, t] * (1-occupancy[c, r])) / EventsTotal;
 
-
+### Solve the problem / find a feasible solution ###
 solve;
 
 
 # auslastung der timeslots
 # var auslastung{t in timeslots} := sum{c in courses, r in rooms} x[c, r, t];
 
+# Display output
 display x; # display capacity; display maxParticipants; display courseFrequency;
 
 # display occupancy;
@@ -133,7 +137,6 @@ display maxCoursesPerSlot;
 display minCoursesPerSlot;
 
 display MaxSimCoursesPerSlot;
-
 
 display departmentAssign;
 

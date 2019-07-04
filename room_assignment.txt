@@ -9,11 +9,12 @@ option randseed'';
 # Define params required for sets
 param TpD ;                               # time slots per day
 param DpW ;                               # days per week
+param weeks ;                             # schedule weeks
 
 # Define sets
 set rooms ;                               # rooms
 set courses ;                             # courses
-set timeslots := {0..(TpD * DpW) - 1};    # timeslots
+set timeslots := {0..(TpD * DpW * weeks) - 1};    # timeslots
 set departments ;                         # departments
 
 # Define params
@@ -25,7 +26,10 @@ param departmentAssign{c in courses} ;    # department belonging per course
 param departmentBin{d in departments, c in courses} := if departmentAssign[c] = d then 1 else 0;
 
 param maxParticipants{c in courses} := round(Uniform(5,10));   # maximal enrollment of participants per course
-param courseFrequency{c in courses}; # := round(Uniform(1,2)); # course frequency - weekly / biweekly
+param courseFrequency{c in courses}; # := round(Uniform(1,2)); # course frequency -> lectures per week
+
+# Define whether course is weekly or not
+param isWeekly {c in courses} := if courseFrequency[c] >= 1 then 1 else 0;
 
 # Occupancy
 param occupancy{c in courses, r in rooms} := 1.0*maxParticipants[c]/capacity[r];
@@ -52,7 +56,7 @@ subject to NB1{r in rooms, t in timeslots}:
 # TODO: Haeufigkeit eines Kurses pro Woche
 ##########
 subject to NB2{c in courses}:
-    sum{r in rooms, t in timeslots} x[c,r,t] = courseFrequency[c];
+    sum{r in rooms, t in timeslots} x[c,r,t] = courseFrequency[c] * weeks;
 
 ### 03 ###
 # consider room capacity based on course participants
@@ -69,10 +73,17 @@ subject to NB4{c in courses, t in timeslots}:
 ### 05 ###
 # Courses not at the same day
 ##########
-subject to NB5{ d in 0..DpW-1, c in courses }:
+subject to NB5{ d in 0..DpW*weeks-1, c in courses }:
     sum { r in rooms, t in 0..TpD-1 } x[c,r,d*TpD+t] <= 1;
 
 ### 06 ###
+# 
+##########
+subject to NB6 {t1 in 0..DpW*TpD-1, t2 in DpW*TpD..DpW*TpD*weeks-1, c in courses, r in rooms}:
+    isWeekly[c] * x[c,r,t1] = x[c,r,t2];
+
+
+### XX ###
 # Courses nearby their department (departmentHQ)
 ##########
 #subject to NB61 {c in courses, r in rooms, t in timeslots}:
@@ -86,7 +97,7 @@ subject to NB5{ d in 0..DpW-1, c in courses }:
 # Kurse nur im Gebaeude des department HQ
 # subject to NB62 {c in courses, r in rooms, t in timeslots}:
 #    abs(x[c,r,t] * r - departmentHQ[departmentAssign[c]]) <= ROOM_DISTANCE;
-minimize ROOM_DISTANCE{c in courses, r in rooms, t in timeslots}:  x[c,r,t] * (r - departmentHQ[departmentAssign[c]]);
+#minimize ROOM_DISTANCE{c in courses, r in rooms, t in timeslots}:  x[c,r,t] * (r - departmentHQ[departmentAssign[c]]);
 
 
 ### XX ###
@@ -141,5 +152,7 @@ display MaxSimCoursesPerSlot;
 display departmentAssign;
 
 display departmentHQ;
+
+display isWeekly;
 
 #end;

@@ -7,10 +7,13 @@ import os
 from ampl_modules.amplcode import AmplCode
 
 # Days per Week
-DpW = 3
+DpW = 2
 
 # Timeslots per day
 TpD = 2
+
+# Weeks for the schedule
+weeks = 2
 
 # Number Of Rooms
 # room_count = 3 not in use anymore
@@ -28,12 +31,12 @@ for r in rooms:
     capacity[r] = [10, 20, 40, 50, 100][r%5]
 
 # Number of Courses
-course_count = 6
+course_count = 2
 
 # course frequency
 course_frequency = {}
 for c in range(1, course_count+1):
-    course_frequency[c] = [1,2,2][c%3]
+    course_frequency[c] = [1,1,1,2,2][c%3]
 
 # department assign
 department_assign = {}
@@ -62,6 +65,7 @@ print(amplcode.get_params())
 
 amplcode.set_param("DpW", data=DpW)
 amplcode.set_param("TpD", data=TpD)
+amplcode.set_param("weeks", data=weeks)
 
 # amplcode.set_set('rooms', '{' + ','.join(map(str, rooms)) + '}')
 amplcode.set_set('rooms', '{' + ','.join(map(str, rooms)) + '}')
@@ -93,6 +97,9 @@ for key, value in zip(values.index.tolist(), values.values.tolist()):
 
 print("Number of Entries", len(data))
 
+DpW *= weeks
+
+
 arranged_data = []
 for day in range(DpW):
     arranged_data.append([])
@@ -108,7 +115,6 @@ for day in arranged_data:
     print()
 
 lines = np.array(arranged_data).T
-
 colTemplate = '{:26}|'
 colWidth = int(colTemplate[2:4]) + 1
 print(DpW * colWidth * '-' + '-')

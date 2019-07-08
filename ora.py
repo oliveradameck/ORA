@@ -60,7 +60,7 @@ print("Expected Number of Courses: ", sum(list(course_frequency.values())))
 
 # pro_environment = "/Users/oliveradameck/Desktop/ampl-pro/ampl_linux-intel64"
 # low_environment = "/User/oliveradameck/Desktopampl/ampl.linux64"
-pro_environment = "ampl"
+pro_environment = os.environ.get("AMPL_PATH", "ampl")
 # low_environment = "/User/oliveradameck/Desktopampl/ampl.linux64"
 # path = os.path.join(os.path.expanduser('~'), 'ora')
 ampl = AMPL(Environment(pro_environment))

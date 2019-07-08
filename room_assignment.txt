@@ -105,11 +105,11 @@ subject to NB7: sum{c in courses, r in rooms, t in timeslots}
  #   isWeekly[c] * x[c,r,t1] = isWeekly[c] * x[c,r, week2[t1]];
 
 # if weekly then course should be in first week and second week
-subject to NB91{c in courses}:
-    sum{r in rooms, t in firstWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
+#subject to NB91{c in courses}:
+#    sum{r in rooms, t in firstWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
 
-subject to NB92{c in courses}:
-    sum{r in rooms, t in secondWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
+#subject to NB92{c in courses}:
+#    sum{r in rooms, t in secondWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
 
 
 #subject to LOWER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) >= minCoursesPerSlot;

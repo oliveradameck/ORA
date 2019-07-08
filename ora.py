@@ -13,7 +13,7 @@ DpW = 2
 TpD = 1
 
 # Weeks for the schedule
-weeks = 1
+weeks = 2
 
 # Number Of Rooms
 # room_count = 3 not in use anymore
@@ -50,21 +50,6 @@ for d, base in departmentHQ.items():
     for r in rooms:
         distance_matrix[(d, r)] = abs(r-base)
 
-
-
-
-## courses witzh a frequency below 1 are two-weekly
-#subject to NB8 {t1 in firstWeek, t2 in secondWeek, c in courses, r in rooms}:
- #   isWeekly[c] * x[c,r,t1] = isWeekly[c] * x[c,r,t2];
-
-for c in [1, 2]:
-    for r in rooms:
-        for t1 in [0,1,2,3]:
-            for t2 in [4, 5, 6, 7]:
-                if course_frequency[c] < 1:
-                    continue
-                # print(f"isWeekly[{c}] * x[{c}, {r}, {t1}] = isWeekly[{c}] * x[{c}, {r}, {t2}]")
-                print(f" x[{c}, {r}, {t1}] =  x[{c}, {r}, {t2}]")
 
 #sys.exit()
 print("Optimized Room Assignment Tool")

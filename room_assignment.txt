@@ -9,12 +9,14 @@ option randseed'';
 # Define params required for sets
 param TpD ;                               # time slots per day
 param DpW ;                               # days per week
-param weeks ;                             # schedule weeks
+param weeks ;                             # schedule weeks (1 or 2)
 
 # Define sets
 set rooms ;                               # rooms
 set courses ;                             # courses
 set timeslots := {0..(TpD * DpW * weeks) - 1};    # timeslots
+set firstWeek := {0..DpW*TpD-1};
+set secondWeek := {(weeks-1)*DpW*TpD..DpW*TpD*weeks-1};
 set departments ;                         # departments
 
 # Define params
@@ -37,8 +39,6 @@ param EventsTotal := sum{c in courses} courseFrequency[c];
 
 # Distance
 param distance {r in rooms, d in departments };
-
-
 
 
 # Decision variable
@@ -98,19 +98,18 @@ subject to NB6{t in timeslots, d in departments}:
 subject to NB7: sum{c in courses, r in rooms, t in timeslots}
     x[c,r,t] * distance[r, departmentAssign[c]] <= maxRoomDistance;
 
-## debug
-set secondWeek := {(weeks-1)*DpW*TpD..DpW*TpD*weeks-1};
-set firstWeek := {0..DpW*TpD-1};
-display secondWeek;
-display firstWeek;
-display timeslots;
-
-## /debug
 ### 08 ###
 # courses witzh a frequency below 1 are two-weekly
-subject to NB8 {t1 in firstWeek, t2 in secondWeek, c in courses, r in rooms}:
-    isWeekly[c] * x[c,r,t1] <= x[c,r,t2];
-    
+#subject to NB8 {t1 in firstWeek, t2 in secondWeek, c in courses, r in rooms}:
+ #   isWeekly[c] * x[c,r,t1] = isWeekly[c] * x[c,r,t2];
+
+# if weekly then course should be in first week and second week
+subject to NB91{c in courses}:
+    sum{r in rooms, t in firstWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
+
+subject to NB92{c in courses}:
+    sum{r in rooms, t in secondWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
+
 
 #subject to LOWER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) >= minCoursesPerSlot;
 #subject to UPPER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) <= maxCoursesPerSlot;
@@ -163,5 +162,12 @@ display isWeekly;
 display distance;
 
 display courseFrequency;
+## debug
+display secondWeek;
+display firstWeek;
+display timeslots;
+
+## /debug
+
 
 #end;

@@ -10,10 +10,10 @@ from ampl_modules.amplcode import AmplCode
 DpW = 2
 
 # Timeslots per day
-TpD = 2
+TpD = 1
 
 # Weeks for the schedule
-weeks = 2
+weeks = 1
 
 # Number Of Rooms
 # room_count = 3 not in use anymore
@@ -36,7 +36,7 @@ course_count = 2
 # course frequency
 course_frequency = {}
 for c in range(1, course_count+1):
-    course_frequency[c] = [1,1,1,2,2][c%3]
+    course_frequency[c] = [1,1][c%2]
 
 # department assign
 department_assign = {}
@@ -53,6 +53,20 @@ for d, base in departmentHQ.items():
 
 
 
+## courses witzh a frequency below 1 are two-weekly
+#subject to NB8 {t1 in firstWeek, t2 in secondWeek, c in courses, r in rooms}:
+ #   isWeekly[c] * x[c,r,t1] = isWeekly[c] * x[c,r,t2];
+
+for c in [1, 2]:
+    for r in rooms:
+        for t1 in [0,1,2,3]:
+            for t2 in [4, 5, 6, 7]:
+                if course_frequency[c] < 1:
+                    continue
+                # print(f"isWeekly[{c}] * x[{c}, {r}, {t1}] = isWeekly[{c}] * x[{c}, {r}, {t2}]")
+                print(f" x[{c}, {r}, {t1}] =  x[{c}, {r}, {t2}]")
+
+#sys.exit()
 print("Optimized Room Assignment Tool")
 
 
@@ -69,8 +83,8 @@ ampl.setOption('solver', 'cplex')
 
 amplcode = AmplCode.from_file('room_assignment.txt')
 
-print("Parameters from AMPL Code:")
-print(amplcode.get_params())
+#print("Parameters from AMPL Code:")
+#print(amplcode.get_params())
 
 amplcode.set_param("DpW", data=DpW)
 amplcode.set_param("TpD", data=TpD)

@@ -44,6 +44,15 @@ for c in range(1, course_count+1):
 	department_assign[c] = (c+1) % 2 + 1
 	
 
+# Distance matrix
+distance_matrix = {}
+for d, base in departmentHQ.items():
+    for r in rooms:
+        distance_matrix[(d, r)] = abs(r-base)
+
+
+
+
 print("Optimized Room Assignment Tool")
 
 
@@ -77,6 +86,7 @@ amplcode.set_param_data("capacity", data=capacity.items())
 amplcode.set_param_data("courseFrequency", data=course_frequency.items())
 amplcode.set_param_data("departmentHQ", departmentHQ.items())
 amplcode.set_param_data("departmentAssign", department_assign.items())
+amplcode.set_param_data_3d("distance", distance_matrix.items())
 
 
 amplcode.export("ora_export.txt")

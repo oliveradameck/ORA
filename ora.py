@@ -8,41 +8,44 @@ from ampl_modules.amplcode import AmplCode
 import ascii_table
 
 # Days per Week
-DpW = 3
+DpW = 5
 
 # Timeslots per day
-TpD = 4
+TpD = 5
 
 # Weeks for the schedule
-weeks = 2
+weeks = 1
 
 # Number Of Rooms
-# room_count = 3 not in use anymore
-buildings = 2
-rooms_per_building = 2
-rooms = sum([list(range(i * 1000 + 1, i * 1000 + rooms_per_building + 1)) for i in range(1, buildings + 1)], [])
+buildings = 5
+rooms_per_building = 3
+rooms = sum([list(range(i * 100 + 1, i * 100 + rooms_per_building + 1)) for i in range(1, buildings + 1)], [])
+# room_count = len(rooms)
 
 # department HQ
-departmentHQ = {1: 1000, 2: 2000}
+department_count = 5
+departmentHQ = {}
 
-print(rooms)
+for i in range(1, department_count+1):
+    departmentHQ[i] = i * 100
+
 # capacity
 capacity = {}
 for r in rooms:
     capacity[r] = [10, 20, 40, 50, 100][r % 5]
 
 # Number of Courses
-course_count = 5
+course_count = 10
 
 # course frequency
 course_frequency = {}
 for c in range(1, course_count + 1):
-    course_frequency[c] = [1, 0.5][c % 2]
+    course_frequency[c] = [0.5, 0.5, 1, 2, 2][c % 5]
 
 # department assign
 department_assign = {}
 for c in range(1, course_count + 1):
-    department_assign[c] = (c + 1) % 2 + 1
+    department_assign[c] = min(c // department_count + 1, department_count)
 
 # Distance matrix
 distance_matrix = {}

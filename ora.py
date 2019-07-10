@@ -11,10 +11,10 @@ import ascii_table
 DpW = 5
 
 # Timeslots per day
-TpD = 5
+TpD = 4
 
 # Weeks for the schedule
-weeks = 1
+weeks = 2
 
 # Number Of Rooms
 buildings = 5
@@ -26,7 +26,7 @@ rooms = sum([list(range(i * 100 + 1, i * 100 + rooms_per_building + 1)) for i in
 department_count = 5
 departmentHQ = {}
 
-for i in range(1, department_count+1):
+for i in range(1, department_count + 1):
     departmentHQ[i] = i * 100
 
 # capacity
@@ -35,7 +35,7 @@ for r in rooms:
     capacity[r] = [10, 20, 40, 50, 100][r % 5]
 
 # Number of Courses
-course_count = 10
+course_count = 25
 
 # course frequency
 course_frequency = {}
@@ -53,18 +53,20 @@ for d, base in departmentHQ.items():
     for r in rooms:
         distance_matrix[(d, r)] = abs(r - base)
 
+if weeks == 1 and 0.5 in course_frequency.values():
+    raise ValueError(
+        "Creating a one-week schedule with courses with frequency of 0.5 is not possible. Please review the data")
+
 # sys.exit()
 print("Optimized Room Assignment Tool")
 
 print("Setup")
 print("Expected Number of Courses: ", sum(list(course_frequency.values())))
 
-# pro_environment = "/Users/oliveradameck/Desktop/ampl-pro/ampl_linux-intel64"
-# low_environment = "/User/oliveradameck/Desktopampl/ampl.linux64"
-pro_environment = os.environ.get("AMPL_PATH", "ampl")
-# low_environment = "/User/oliveradameck/Desktopampl/ampl.linux64"
-# path = os.path.join(os.path.expanduser('~'), 'ora')
-ampl = AMPL(Environment(pro_environment))
+
+environment = os.environ.get("AMPL_PATH", "ampl")
+
+ampl = AMPL(Environment(environment))
 ampl.setOption('solver', 'cplex')
 
 amplcode = AmplCode.from_file('room_assignment.txt')
@@ -130,7 +132,7 @@ for line in lines:
             rows[-1].append('')
 
 for week in range(weeks):
-    print(f"Week {week+1}")
+    print(f"Week {week + 1}")
     ascii_table.print_table(header=[f"Day {i}" for i in range(1, DpW + 1)],
                             rows=list(map(lambda a: a[week * DpW:(week + 1) * DpW], rows)),
                             spacing=2,

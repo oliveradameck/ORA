@@ -144,6 +144,7 @@ display departmentAssign;
 display departmentHQ;
 
 display isWeekly;
+display week2;
 
 display distance;
 

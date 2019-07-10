@@ -1,0 +1,187 @@
+# ROOM ASSIGNMENT PROBLEM
+
+reset;
+
+# Define options
+option omit_zero_rows 1;
+option randseed'';
+
+# Define params required for sets
+param TpD ;                                       # time slots per day
+param DpW ;                                       # days per week
+param weeks ;                                     # schedule weeks (1 or 2)
+
+# Define sets
+set rooms ;                                       # rooms
+set courses ;                                     # courses
+set timeslots := {0..(TpD * DpW * weeks) - 1};    # timeslots
+param T := DpW * TpD * weeks;                      # week indicator
+set departments ;                                 # departments
+
+# set firstWeek := {0..DpW*TpD-1};
+# set secondWeek := {(weeks-1)*DpW*TpD..DpW*TpD*weeks-1};
+
+# Define params
+param capacity {r in rooms};               # capacity per room
+param departmentHQ {d in departments} ;    # base room per department
+param departmentAssign {c in courses} ;    # department belonging per course
+
+### binary whether department is assigned to a course
+param departmentBin {d in departments, c in courses} := if departmentAssign[c] = d then 1 else 0;
+
+param maxParticipants {c in courses} := round(Uniform(5,10));   # maximal enrollment of participants per course
+param courseFrequency {c in courses}; # := round(Uniform(1,2)); # course frequency -> lectures per week
+
+# Define whether course is weekly or not
+param isWeekly {c in courses} := if courseFrequency[c] >= 1 then 1 else 0;
+
+# Occupancy
+param occupancy {c in courses, r in rooms} := 1.0*maxParticipants[c]/capacity[r];
+param EventsTotal := sum{c in courses} courseFrequency[c];
+
+# Distance
+param distance {r in rooms, d in departments };
+
+
+# Decision variable
+var x {c in courses, r in rooms, t in timeslots} binary;
+
+# Define vars
+var MaxSimCoursesPerSlot integer;
+
+# Occupancy Timeslots
+# the thing with the quetschvariablen
+var minCoursesPerSlot integer; # min courses per slot
+var maxCoursesPerSlot integer; # max courses per slot
+
+# rooms nearby their department
+var maxRoomDistance integer; 
+
+### 01 ###
+# Only one course at a specific time slot in a room
+##########
+subject to NB1{r in rooms, t in timeslots}:
+    sum{c in courses} x[c,r,t] <= 1;
+
+### 02 ###
+# Frequency of a course per week
+##########
+subject to NB2{c in courses}:
+    sum{r in rooms, t in timeslots} x[c,r,t] = courseFrequency[c] * weeks;
+
+### 03 ###
+# Consider room capacity based on course participants
+##########
+subject to NB3{c in courses, r in rooms, t in timeslots}:
+    x[c,r,t] * maxParticipants[c] <= x[c,r,t] * capacity[r];
+
+### 04 ###
+# Courses not in at the same time slot in different rooms
+##########
+subject to NB4{c in courses, t in timeslots}:
+    sum{r in rooms} x[c,r,t] <= 1;
+
+### 05 ###
+# Courses not at the same day
+##########
+subject to NB5{ d in 0..DpW*weeks-1, c in courses }:
+    sum { r in rooms, t in 0..TpD-1 } x[c,r,d*TpD+t] <= 1;
+
+### 06 ###
+# Courses of same departments not at same time slot
+##########
+subject to NB6{t in timeslots, d in departments}:
+    sum{r in rooms, c in courses}
+        departmentBin[d, c] * x[c, r, t] <= MaxSimCoursesPerSlot;
+
+### 07 ###
+# Courses in buildings of their department HQ
+##########
+subject to NB7: sum{c in courses, r in rooms, t in timeslots}
+    x[c,r,t] * distance[r, departmentAssign[c]] <= maxRoomDistance;
+
+### 08 ###
+# Courses with a frequency lower than 1 are biweekly
+##########
+#subject to NB8 {t1 in firstWeek, t2 in secondWeek, c in courses, r in rooms}:
+ #   isWeekly[c] * x[c,r,t1] = isWeekly[c] * x[c,r,t2];
+
+
+subject to NB8a {t1 in 1..T/2, c in courses, r in rooms}:
+    x[c,r,t1] * isWeekly[c] = x[c,r,t1+T/2] * isWeekly[c];
+
+subject to NB8b {t1 in 1..T/2, c in courses, r in rooms}:
+    x[c,r,t1] * isWeekly[c] <= 1- x[c,r,t1+T/2] * isWeekly[c];
+
+subject to NB8c {t1 in 1..T/2, c in courses, r in rooms}:
+    x[c,r,t1+T/2] * isWeekly[c] <= 1- x[c,r,t1] * isWeekly[c];
+
+
+# if weekly then course should be in first week and second week
+#subject to NB91{c in courses}:
+#    sum{r in rooms, t in firstWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
+
+#subject to NB92{c in courses}:
+#    sum{r in rooms, t in secondWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
+
+
+#subject to LOWER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) >= minCoursesPerSlot;
+#subject to UPPER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) <= maxCoursesPerSlot;
+
+# Define objectives
+# minimize MAXDEP: MaxSimCoursesPerSlot;
+# maximize ROOM_OCCUPANCY: (sum{c in courses, r in rooms, t in timeslots} x[c, r, t] * occupancy[c, r]) / EventsTotal;
+# minimize SLOT_SPREAD: maxCoursesPerSlot - minCoursesPerSlot;
+
+## optional: add weights
+## objectve: n * upper_bound - m * lower_bound
+
+
+# Non-Linear approach to optimize occupancy  (working, but slow)
+# minimize LP: sum{t in timeslots} ((sum{c in courses, r in rooms} x[c, r, t]) - 2)^2;
+
+
+## Combine!
+# minimize ALL: 1/2 * (maxCoursesPerSlot - minCoursesPerSlot) + (sum{c in courses, r in rooms, t in timeslots} x[c, r, t] * (1-occupancy[c, r])) / EventsTotal;
+
+## minimize maximal distance of rooms to departments
+minimize RD: maxRoomDistance;
+
+
+
+### Solve the problem / find a feasible solution ###
+solve;
+
+
+# Display output
+display x; # display capacity; display maxParticipants; display courseFrequency;
+
+# display occupancy;
+
+display courses;
+
+display rooms;
+
+display maxCoursesPerSlot;
+display minCoursesPerSlot;
+
+display MaxSimCoursesPerSlot;
+
+display departmentAssign;
+
+display departmentHQ;
+
+display isWeekly;
+
+#display distance;
+
+display courseFrequency;
+## debug
+#display secondWeek;
+#display firstWeek;
+#display timeslots;
+
+## /debug
+
+
+#end;

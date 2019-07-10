@@ -32,6 +32,7 @@ param courseFrequency{c in courses}; # := round(Uniform(1,2)); # course frequenc
 
 # Define whether course is weekly or not
 param isWeekly {c in courses} := if courseFrequency[c] >= 1 then 1 else 0;
+param week2{t in firstWeek} := t + DpW*TpW;
 
 # Occupancy
 param occupancy{c in courses, r in rooms} := 1.0*maxParticipants[c]/capacity[r];
@@ -99,16 +100,16 @@ subject to NB7: sum{c in courses, r in rooms, t in timeslots}
     x[c,r,t] * distance[r, departmentAssign[c]] <= maxRoomDistance;
 
 ### 08 ###
-# courses witzh a frequency below 1 are two-weekly
-#subject to NB8 {t1 in firstWeek, t2 in secondWeek, c in courses, r in rooms}:
- #   isWeekly[c] * x[c,r,t1] = isWeekly[c] * x[c,r,t2];
+# courses with a frequency below 1 are two-weekly
+#subject to NB8 {t1 in firstWeek, c in courses, r in rooms}:
+ #   isWeekly[c] * x[c,r,t1] = isWeekly[c] * x[c,r, week2[t1]];
 
 # if weekly then course should be in first week and second week
-subject to NB91{c in courses}:
-    sum{r in rooms, t in firstWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
+#subject to NB91{c in courses}:
+#    sum{r in rooms, t in firstWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
 
-subject to NB92{c in courses}:
-    sum{r in rooms, t in secondWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
+#subject to NB92{c in courses}:
+#    sum{r in rooms, t in secondWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
 
 
 #subject to LOWER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) >= minCoursesPerSlot;
@@ -162,12 +163,8 @@ display isWeekly;
 display distance;
 
 display courseFrequency;
-## debug
-display secondWeek;
 display firstWeek;
 display timeslots;
-
-## /debug
 
 
 #end;

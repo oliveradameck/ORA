@@ -20,22 +20,22 @@ set secondWeek := {(weeks-1)*DpW*TpD..DpW*TpD*weeks-1};
 set departments ;                         # departments
 
 # Define params
-param capacity{r in rooms};               # capacity per room
-param departmentHQ{d in departments} ;    # base room per department
-param departmentAssign{c in courses} ;    # department belonging per course
+param capacity {r in rooms};               # capacity per room
+param departmentHQ {d in departments} ;    # base room per department
+param departmentAssign {c in courses} ;    # department belonging per course
 
 ### binary whether department is assigned to a course
 param departmentBin{d in departments, c in courses} := if departmentAssign[c] = d then 1 else 0;
 
-param maxParticipants{c in courses} := round(Uniform(5,10));   # maximal enrollment of participants per course
-param courseFrequency{c in courses}; # := round(Uniform(1,2)); # course frequency -> lectures per week
+param maxParticipants {c in courses} := round(Uniform(5,10));   # maximal enrollment of participants per course
+param courseFrequency  {c in courses}; # := round(Uniform(1,2)); # course frequency -> lectures per week
 
 # Define whether course is weekly or not
 param isWeekly {c in courses} := if courseFrequency[c] >= 1 then 1 else 0;
-param week2{t in firstWeek} := t + DpW*TpW;
+param week2 {t in firstWeek} := t + DpW*TpD;
 
 # Occupancy
-param occupancy{c in courses, r in rooms} := 1.0*maxParticipants[c]/capacity[r];
+param occupancy {c in courses, r in rooms} := 1.0 * maxParticipants[c] / capacity[r];
 param EventsTotal := sum{c in courses} courseFrequency[c];
 
 # Distance
@@ -100,17 +100,10 @@ subject to NB7: sum{c in courses, r in rooms, t in timeslots}
     x[c,r,t] * distance[r, departmentAssign[c]] <= maxRoomDistance;
 
 ### 08 ###
-# courses with a frequency below 1 are two-weekly
-#subject to NB8 {t1 in firstWeek, c in courses, r in rooms}:
- #   isWeekly[c] * x[c,r,t1] = isWeekly[c] * x[c,r, week2[t1]];
-
-# if weekly then course should be in first week and second week
-#subject to NB91{c in courses}:
-#    sum{r in rooms, t in firstWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
-
-#subject to NB92{c in courses}:
-#    sum{r in rooms, t in secondWeek} isWeekly[c] * x[c,r,t] = isWeekly[c] * courseFrequency[c];
-
+# Biweekly courses in same timeslot of the other week
+##########
+subject to NB8 {t1 in firstWeek, c in courses, r in rooms: isWeekly[c] = 1}:
+    x[c,r,t1] = x[c,r, week2[t1]];
 
 #subject to LOWER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) >= minCoursesPerSlot;
 #subject to UPPER_BOUND{t in timeslots}: (sum{c in courses, r in rooms} x[c, r, t]) <= maxCoursesPerSlot;
@@ -165,6 +158,7 @@ display distance;
 display courseFrequency;
 display firstWeek;
 display timeslots;
+display week2;
 
 
 #end;
